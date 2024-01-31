@@ -1,0 +1,199 @@
+
+import { View, Text, Image, ScrollView, StyleSheet, TextInput,TouchableOpacity, Alert, Button } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+import React, { useEffect, useState } from 'react'
+import { FIRESTORE_DB } from './Donation/firebaseConfig'
+import { addDoc, collection, doc, onSnapshot } from 'firebase/firestore'
+
+const BloodRequestForm = ({navigation}:any) => {
+  const[todos,setTodos]=useState<any>([]);
+  const [name, setName] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [bloodGroup, setBloodGroup] = useState('');
+
+  useEffect(()=>{
+    const todoRef=collection(FIRESTORE_DB,'bloodRequests');
+    const subscribe=onSnapshot(todoRef,{
+      next:(snapshot)=>{
+        console.log("UPDATED");
+        const todos:any[]=[];
+        snapshot.docs.forEach((doc)=>{
+          console.log(doc.data());
+          todos.push({
+            id:doc.id,
+           ...doc.data()
+          });
+        });
+        setTodos(todos);
+      },
+    })
+    return()=>subscribe();
+      },[])
+
+  const handleSubmit = async () => {
+    try {
+    const doc=await addDoc(collection(FIRESTORE_DB, 'bloodRequests'), {
+        name:name,
+        mobileNumber:mobileNumber,
+        email:email,
+        bloodGroup:bloodGroup,
+        status: 'pending',
+      });
+
+      Alert.alert('Form Submitted', 'You will get notified within 24 hours.');
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      Alert.alert('Form Submission Failed', 'Please try again later.');
+    }
+    setName('');
+    setMobileNumber('');
+    setEmail('');
+    setBloodGroup('');
+  };
+
+  return (
+    <ScrollView>
+      <View style={styles.container}>
+      
+
+        <View style={styles.headerRight}>
+          <Text style={styles.headerLink}>Home</Text>
+          <Text style={styles.headerLink}>Admin Login</Text>
+        </View>
+
+        <View style={styles.marqueeContainer}>
+          <Text style={styles.marqueeText}>
+            Gutanga amaraso nugutanga ubuzima ! Rengera ubuzima Nawe Utanga Amaraso
+          </Text>
+        </View>
+
+        {/* Image Carousel (You need to implement this using a library like react-native-snap-carousel) */}
+
+        <View>
+          {/* Form */}
+          <Text style={styles.formTitle}>Enter your Details to Request for Blood</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Name"
+            value={name}
+            onChangeText={(text) => setName(text)}
+            
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Mobile Number"
+            value={mobileNumber}
+            onChangeText={(text) => setMobileNumber(text)}
+            keyboardType="phone-pad"
+            
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Email Address"
+            value={email}
+            onChangeText={(text) => setEmail(text)}
+            keyboardType="email-address"
+            
+          />
+          <Picker
+            style={styles.select}
+            selectedValue={bloodGroup}
+            onValueChange={(itemValue) => setBloodGroup(itemValue)}
+            
+          >
+            <Picker.Item label="Select Blood Group" value="" />
+            <Picker.Item label="A+" value="A+" />
+            <Picker.Item label="A-" value="A-" />
+            <Picker.Item label="B+" value="B+" />
+            <Picker.Item label="B-" value="B-" />
+            <Picker.Item label="O+" value="O+" />
+            <Picker.Item label="O-" value="O-" />
+            <Picker.Item label="AB+" value="AB+" />
+            <Picker.Item label="AB-" value="AB-" />
+          </Picker>
+         
+            <Button   onPress={handleSubmit} title='Submit' disabled={name===''||email===''||mobileNumber===''||bloodGroup===''}/>
+         
+        </View>
+        <View style={{marginVertical:4,alignItems:"center"}}>
+      {todos.map((name)=>(
+        <Text key={name.id}>{name.name}</Text>
+      ))}
+      {todos.map((email)=>(
+        <Text key={email.id}>{email.email}</Text>
+      ))}
+      </View>
+      </View>
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+  },
+  logo: {
+    width: 50,
+    height: 50,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginVertical: 10,
+  },
+  headerLink: {
+    marginRight: 10,
+  },
+  marqueeContainer: {
+    backgroundColor: 'orange',
+    paddingTop: 0,
+    paddingBottom: 30,
+    alignItems: 'center',
+  },
+  marqueeText: {
+    fontSize: 30,
+  },
+  formTitle: {
+    textAlign: 'center',
+    fontSize: 20,
+    marginBottom: 10,
+  },
+  input: {
+    borderStyle: 'solid',
+    borderWidth: 1,
+    borderColor: 'silver',
+    height: 50,
+    fontSize: 16,
+    marginLeft: '2%',
+    padding: 15,
+    marginBottom: 10,
+    borderRadius: 25,
+  },
+  select: {
+    borderStyle: 'solid',
+    borderWidth: 1,
+    borderColor: 'silver',
+    height: 50,
+    fontSize: 16,
+    marginLeft: '2%',
+    padding: 15,
+    marginBottom: 10,
+    borderRadius: 25,
+    backgroundColor: 'silver',
+  },
+  button: {
+    backgroundColor: 'blue',
+    height: 50,
+    marginLeft: '2%',
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    fontSize: 16,
+  },
+});
+
+export default BloodRequestForm;
